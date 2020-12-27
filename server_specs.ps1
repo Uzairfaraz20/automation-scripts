@@ -1,6 +1,7 @@
 ##### server_specs.ps1 #####
 # Lists a few server specifications such as drive space #
 # cores, RAM, and a server status check                 #
+# Assumes C, D, E drives currently#
 
 
 
@@ -16,18 +17,33 @@ Function Calculate_Drive_Space($drive){
     
     if((Test-Path $path) -eq $true){
     
-        $driveUsed = (Get-PSDrive $drive | Select-Object -ExpandProperty Used)
+        $driveUsed = (Get-PSDrive $drive | Select-Object -ExpandProperty Used) 
         $driveFree = (Get-PSDrive $drive | Select-Object -ExpandProperty free)
 
-        $totalSpace = [math]::Round(($driveUsed + $driveFree)/1gb)
+        $usedTemp = [math]::Round($driveUsed/ 1gb,2)
+        $freeTemp = [math]::Round($driveFree / 1gb,2)
 
-        Write-Host "$drive Space: $totalSpace`n" -ForegroundColor Green
+        $totalSpace = [math]::Round(($driveUsed + $driveFree)/1gb,2)
+
+        Write-Host "Free:      ${freeTemp}gb - $drive drive" -ForegroundColor Green
+        Write-Host "Used:      ${usedTemp}gb - $drive drive" -ForegroundColor Green
+        Write-Host "Remaining: ${usedTemp}gb / ${totalSpace}gb`n" -ForegroundColor Green
+
+        $percent = $usedTemp / $totalSpace
+
+        if($percent -ge 0.90){
+            Write-Host "Warning: 90%+ Used`n" -ForegroundColor Red
+        } elseif($percent -ge 0.75){
+            Write-Host "Warning: 75%+ Used`n" -ForegroundColor Red
+        } elseif($percent -ge 0.50){
+            Write-Host "Warning: 50%+ Used`n" -ForegroundColor Red
+        }
 
 
     
     } else{
     
-        Write-Host "##[error] $drive Drive not found `n" -ForegroundColor Red
+        Write-Host "Waring: $drive Drive not found `n" -ForegroundColor Red
     }
 }
 
@@ -73,7 +89,7 @@ Function StatusCheck(){
         Write-Host "Server status: $status `n" -ForegroundColor Green
     } else{
     
-        Write-Host "##[error] Server status: $status `n" -ForegroundColor Red
+        Write-Host "Error: Server status: $status `n" -ForegroundColor Red
     
     }
 
